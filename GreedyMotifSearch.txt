@@ -1,0 +1,81 @@
+with open("input.txt", "r") as file:
+	k, t = list(map(int, file.readline().strip().split()))
+	dna = [x.strip() for x in file.readlines()]
+
+def profile(dna_list):
+	profile_list = []
+	for x in range(len(dna_list[0])):
+		freq_dict = dict(list(zip('ACGT', [0] * 4)))
+		for dna in dna_list:
+			freq_dict[dna[x]] += 1
+		profile_list.append([x / sum(freq_dict.values()) for x in freq_dict.values()])
+	return profile_list
+
+def most_common(l):
+	m = [0, None]
+	l_set = set(l)
+	for item in l_set:
+		c = l.count(item)
+		if c > m[0]:
+			m[0] = c
+			m[1] = item
+	return m[1]
+
+def consensus(kmer_list):
+	con = []
+	for x in range(len(kmer_list[0])):
+		col = [y[x] for y in kmer_list]
+		con.append(most_common(col))
+	return ''.join(con)
+					
+
+def score(kmer_list):
+	con = consensus(kmer_list)
+	distance = 0
+	for x in range(len(kmer_list[0])):
+		col = [y[x] for y in kmer_list]
+		c = col.count(con[x])
+		d = len(col) - c
+		distance += d
+	return distance
+
+def compare(kmers1, kmers2):
+	if score(kmers1) < score(kmers2):
+		return kmers1
+	else:
+		return kmers2
+
+def most_prob(dna_seq, prof):
+	kmers = [dna_seq[x : x + k] for x in range(len(dna_seq) - k + 1)]
+	maximum = [0, kmers[0]]
+	kmer_dict = dict(zip("ACGT", [x for x in range(4)]))
+	for kmer in kmers:
+		probability = 1
+		for base_index in range(len(kmer)):
+			probability *= prof[base_index][kmer_dict[kmer[base_index]]]
+		if probability > maximum[0]:
+			maximum[0] = probability
+			maximum[1] = kmer
+	return maximum[1]
+		
+
+best_motifs = [x[0 : k] for x in dna]
+kmers = [dna[0][x : x + k] for x in range(len(dna[0]) - k + 1)]
+
+for kmer in kmers:
+	kmer_list = []
+	kmer_list.append(kmer)
+	prof = profile(kmer_list)
+	for dna_seq_index in range(1, len(dna)):
+		kmer_list.append(most_prob(dna[dna_seq_index], prof))
+		prof = profile(kmer_list)
+	best_motifs = compare(best_motifs, kmer_list)
+[print(k) for k in best_motifs]
+
+'''	
+test = ['ACG', 'TAG', 'ACG', 'AAA', 'GGG', 'CCC']
+print(test)
+prof = profile(test)
+[print(k) for k in prof]
+print(most_prob('AGCGTGAGTG', prof))
+'''
